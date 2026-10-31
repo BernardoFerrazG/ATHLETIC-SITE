@@ -1,5 +1,9 @@
 import emailjs from "@emailjs/browser";
 
+const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
 export const sendPurchaseEmail = (
   userEmail: string,
   userName: string,
@@ -7,9 +11,13 @@ export const sendPurchaseEmail = (
   paymentMethod: string,
   total: number
 ) => {
+  if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY) {
+    return Promise.reject(new Error("EmailJS não configurado: defina as variáveis VITE_EMAILJS_* no .env"));
+  }
+
   return emailjs.send(
-    "service_xx5ellj",
-    "template_30dq8kr",
+    SERVICE_ID,
+    TEMPLATE_ID,
     {
       user_email: userEmail,
       user_name: userName,
@@ -17,6 +25,6 @@ export const sendPurchaseEmail = (
       payment_method: paymentMethod,
       total: total,
     },
-    "2wiy33ZJ10i_KyBNJ"
+    PUBLIC_KEY
   );
 };
