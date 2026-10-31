@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { useState } from "react";
-import { useCart } from "../contexts/CartContext"; 
+import { useCart } from "../contexts/useCart"; 
 import { 
   FaHome, 
   FaNewspaper, 

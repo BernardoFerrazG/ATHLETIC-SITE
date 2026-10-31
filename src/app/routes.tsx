@@ -1,305 +1,110 @@
+import { Suspense, lazy, type ComponentType, type ReactNode } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
-import Landing from "../pages/Landing";
-import Home from "../features/home/pages/Home";
-
-import Games from "../features/games/pages/Games";
-import GameDetails from "../features/games/pages/GameDetails";
-
-import News from "../features/news/pages/News";
-import NewsDetail from "../features/news/pages/NewsDetail";
-
-import Loja from "../features/loja/pages/Loja";
-import ProdutoDetalhe from "../features/loja/pages/ProdutoDetalhe";
-import Carrinho from "../features/loja/pages/Carrinho";
-
-import Ingressos from "../features/ingressos/pages/Ingressos";
-import IngressosDetalhe from "../features/ingressos/pages/IngressosDetalhe";
-
-import Signup from "../features/auth/pages/Signup";
-import Signin from "../features/auth/pages/Signin";
 import PrivateRoute from "../features/auth/components/PrivateRoute";
+import AdminRoute from "../features/auth/components/AdminRoute";
 
-import Profile from "../features/users/pages/Profile";
+// Cada página vira um chunk separado, carregado só quando a rota é acessada.
+// `named` adapta módulos que usam export nomeado ao formato exigido por React.lazy.
+function named<T extends Record<string, unknown>>(
+  loader: () => Promise<T>,
+  name: keyof T
+) {
+  return lazy(() =>
+    loader().then((module) => ({ default: module[name] as ComponentType }))
+  );
+}
 
-import OrderSummary from "../features/orders/pages/OrderSummary";
+const Landing = lazy(() => import("../pages/Landing"));
+const Signup = lazy(() => import("../features/auth/pages/Signup"));
+const Signin = lazy(() => import("../features/auth/pages/Signin"));
 
-import Payment from "../features/orders/pages/Payment";
+const Home = lazy(() => import("../features/home/pages/Home"));
+const Games = lazy(() => import("../features/games/pages/Games"));
+const GameDetails = lazy(() => import("../features/games/pages/GameDetails"));
+const News = lazy(() => import("../features/news/pages/News"));
+const NewsDetail = lazy(() => import("../features/news/pages/NewsDetail"));
+const Loja = lazy(() => import("../features/loja/pages/Loja"));
+const ProdutoDetalhe = lazy(() => import("../features/loja/pages/ProdutoDetalhe"));
+const Carrinho = lazy(() => import("../features/loja/pages/Carrinho"));
+const Ingressos = lazy(() => import("../features/ingressos/pages/Ingressos"));
+const IngressosDetalhe = lazy(() => import("../features/ingressos/pages/IngressosDetalhe"));
+const Profile = lazy(() => import("../features/users/pages/Profile"));
+const OrderSummary = lazy(() => import("../features/orders/pages/OrderSummary"));
+const Payment = lazy(() => import("../features/orders/pages/Payment"));
+const PaymentIngresso = lazy(() => import("../features/orders/pages/PaymentIngresso"));
+const HistoricoCompras = named(() => import("../features/loja/pages/HistoricoCompras"), "HistoricoCompras");
+const DetalheIngresso = named(() => import("../features/loja/pages/DetalheIngresso"), "DetalheIngresso");
+const AcompanharPedidos = named(() => import("../features/loja/pages/AcompanharPedidos"), "AcompanharPedidos");
 
-import PaymentIngresso from "../features/orders/pages/PaymentIngresso";
+const AdminHome = named(() => import("../features/home/pages/AdminHome"), "AdminHome");
+const CreateGame = named(() => import("../features/games/pages/CreateGame"), "CreateGame");
+const ManageGames = named(() => import("../features/games/components/ManageGames"), "ManageGames");
+const CreateNews = named(() => import("../features/news/pages/CreateNews"), "CreateNews");
+const AdminProducts = named(() => import("../features/loja/pages/admin/AdminProducts"), "AdminProducts");
+const CreateProduct = named(() => import("../features/loja/pages/admin/CreateProduct"), "CreateProduct");
+const EditProduct = named(() => import("../features/loja/pages/admin/EditProduct"), "EditProduct");
+const AdminOrders = named(() => import("../features/orders/pages/admin/AdminOrders"), "AdminOrders");
+const OrderDetail = named(() => import("../features/orders/pages/admin/OrderDetail"), "OrderDetail");
 
-import { CreateGame } from "../features/games/pages/CreateGame";
-import { AdminHome } from "../features/home/pages/AdminHome";
-import { ManageGames } from "../features/games/components/ManageGames";
-import { CreateNews } from "../features/news/pages/CreateNews";
-import { AdminProducts } from "../features/loja/pages/admin/AdminProducts";
-import { CreateProduct } from "../features/loja/pages/admin/CreateProduct";
-import { EditProduct } from "../features/loja/pages/admin/EditProduct";
-import { AdminOrders } from "../features/orders/pages/admin/AdminOrders";
-import { OrderDetail } from "../features/orders/pages/admin/OrderDetail";
-import { HistoricoCompras } from '../features/loja/pages/HistoricoCompras';
-import { DetalheIngresso } from '../features/loja/pages/DetalheIngresso'; 
-import { AcompanharPedidos } from '../features/loja/pages/AcompanharPedidos';
+const privateRoutes: [string, ComponentType][] = [
+  ["/home", Home],
+  ["/jogos", Games],
+  ["/jogos/:id", GameDetails],
+  ["/noticias", News],
+  ["/noticias/:id", NewsDetail],
+  ["/ingressos", Ingressos],
+  ["/ingressos/:id", IngressosDetalhe],
+  ["/loja", Loja],
+  ["/produto/:id", ProdutoDetalhe],
+  ["/carrinho", Carrinho],
+  ["/perfil", Profile],
+  ["/resumo-pedido", OrderSummary],
+  ["/pagamento", Payment],
+  ["/pagamento-ingresso", PaymentIngresso],
+  ["/meus-pedidos", AcompanharPedidos],
+  ["/historico-compras", HistoricoCompras],
+  ["/detalhe-ingresso/:id", DetalheIngresso],
+];
+
+const adminRoutes: [string, ComponentType][] = [
+  ["/admin", AdminHome],
+  ["/admin/cadastrar-jogo", CreateGame],
+  ["/admin/gerenciar-jogos", ManageGames],
+  ["/admin/cadastrar-noticias", CreateNews],
+  ["/admin/produtos", AdminProducts],
+  ["/admin/produtos/criar", CreateProduct],
+  ["/admin/produtos/:id/editar", EditProduct],
+  ["/admin/pedidos", AdminOrders],
+  ["/admin/pedidos/:id", OrderDetail],
+];
+
+function withGuard(Guard: ComponentType<{ children: ReactNode }>, Page: ComponentType) {
+  return (
+    <Guard>
+      <Page />
+    </Guard>
+  );
+}
 
 export default function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/" element={<Landing />} />
+    <Suspense fallback={null}>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/cadastro" element={<Signup />} />
+        <Route path="/login" element={<Signin />} />
 
-      <Route
-        path="/home"
-        element={
-          <PrivateRoute>
-            <Home />
-          </PrivateRoute>
-        }
-      />
+        {privateRoutes.map(([path, Page]) => (
+          <Route key={path} path={path} element={withGuard(PrivateRoute, Page)} />
+        ))}
 
-      <Route
-        path="/jogos"
-        element={
-          <PrivateRoute>
-            <Games />
-          </PrivateRoute>
-        }
-      />
+        {adminRoutes.map(([path, Page]) => (
+          <Route key={path} path={path} element={withGuard(AdminRoute, Page)} />
+        ))}
 
-      <Route
-        path="/jogos/:id"
-        element={
-          <PrivateRoute>
-            <GameDetails />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/jogo/:id"
-        element={
-          <PrivateRoute>
-            <GameDetails />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/noticias"
-        element={
-          <PrivateRoute>
-            <News />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/noticias/:id"
-        element={
-         <PrivateRoute>
-          <NewsDetail />
-         </PrivateRoute>
-        }
-      />
-      
-      <Route
-        path="/ingressos"
-        element={
-          <PrivateRoute>
-            <Ingressos />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/ingressos/:id"
-        element={
-          <PrivateRoute>
-            <IngressosDetalhe />
-          </PrivateRoute>
-        }
-      />
-
-
-      <Route
-        path="/loja"
-        element={
-          <PrivateRoute>
-            <Loja />
-          </PrivateRoute>
-        }
-      />
-
-      <Route 
-        path="/carrinho" 
-        element={
-          <PrivateRoute>
-            <Carrinho />
-          </PrivateRoute>
-        } />
-
-      <Route
-        path="/produto/:id"
-        element={
-          <PrivateRoute>
-            <ProdutoDetalhe />
-          </PrivateRoute>
-        }
-      />
-
-      <Route path="/cadastro" element={<Signup />} />
-      <Route path="/login" element={<Signin />} />
-
-      <Route
-        path="/perfil"
-        element={
-          <PrivateRoute>
-            <Profile />
-          </PrivateRoute>
-        }
-      />
-
-
-      <Route
-        path="/resumo-pedido"
-        element={
-          <PrivateRoute>
-            <OrderSummary />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/pagamento"
-        element={
-          <PrivateRoute>
-            <Payment />
-          </PrivateRoute>
-        }
-      />
-
-      
-      <Route
-        path="/admin"
-        element={
-          <PrivateRoute>
-            <AdminHome />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/admin/cadastrar-jogo"
-        element={
-          <PrivateRoute>
-            <CreateGame />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/admin/gerenciar-jogos"
-        element={
-          <PrivateRoute>
-            <ManageGames />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/admin/cadastrar-noticias"
-        element={
-          <PrivateRoute>
-            <CreateNews />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/admin/produtos"
-        element={
-          <PrivateRoute>
-            <AdminProducts />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/admin/produtos/criar"
-        element={
-          <PrivateRoute>
-            <CreateProduct />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/admin/produtos/:id/editar"
-        element={
-          <PrivateRoute>
-            <EditProduct />
-          </PrivateRoute>
-        }
-      />
-      <Route 
-        path="/meus-pedidos" 
-        element={
-          <PrivateRoute>
-            <AcompanharPedidos />
-          </PrivateRoute>
-        } 
-      />
-
-      <Route
-        path="/admin/pedidos"
-        element={
-          <PrivateRoute>
-            <AdminOrders />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/admin/pedidos/:id"
-        element={
-          <PrivateRoute>
-            <OrderDetail />
-          </PrivateRoute>
-        }
-      />
-
-      <Route
-        path="/pagamento-ingresso"
-        element={
-          <PrivateRoute>
-            <PaymentIngresso />
-          </PrivateRoute>
-        }
-      />
-      <Route 
-        path="/historico-compras" 
-        element={ 
-          <PrivateRoute>
-            <HistoricoCompras />
-          </PrivateRoute>
-        } />
-
-        <Route 
-          path="/detalhe-ingresso/:id" 
-          element={
-            <PrivateRoute>
-              <DetalheIngresso />
-            </PrivateRoute>
-          } />
-
-          <Route
-            path="/noticias/:id"
-            element={
-              <PrivateRoute>
-                <NewsDetail />
-              </PrivateRoute>
-            }
-          />
-
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }

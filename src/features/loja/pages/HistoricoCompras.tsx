@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { FaTicketAlt, FaShoppingBag } from "react-icons/fa";
 import { db, auth } from "../../../lib/firebase"; 
 import Sidebar from "../../../components/Sidebar"; 
+import type { OrderItem } from "../../orders/types/order";
 import "../styles/HistoricoCompras.css";
 
 export interface RegistroHistorico {
@@ -16,7 +17,7 @@ export interface RegistroHistorico {
   tipo: 'produto' | 'ingresso';
   
   // Campos de produto
-  items?: any[];
+  items?: OrderItem[];
   
   // Campos de ingresso
   ingressoTitle?: string;
@@ -28,6 +29,51 @@ export function HistoricoCompras() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const carregarTodoOHistorico = async (userId: string) => {
+      try {
+        setLoading(true);
+        const listaUnificada: RegistroHistorico[] = [];
+
+        // 1. Busca Produtos
+        const pedidosSnapshot = await getDocs(query(collection(db, "orders"), where("userId", "==", userId)));
+        pedidosSnapshot.forEach((doc) => {
+          const data = doc.data();
+          listaUnificada.push({
+            id: doc.id,
+            createdAt: data.createdAt?.toDate() || new Date(),
+            status: data.status,
+            total: data.total,
+            paymentMethod: data.paymentMethod,
+            tipo: 'produto',
+            items: data.items
+          });
+        });
+
+        // 2. Busca Ingressos
+        const ingressosSnapshot = await getDocs(query(collection(db, "ingressos_comprados"), where("userId", "==", userId)));
+        ingressosSnapshot.forEach((doc) => {
+          const data = doc.data();
+          listaUnificada.push({
+            id: doc.id,
+            createdAt: data.createdAt?.toDate() || new Date(),
+            status: data.status || "DELIVERED",
+            total: data.total,
+            paymentMethod: data.paymentMethod,
+            tipo: 'ingresso',
+            ingressoTitle: data.title,
+            quantidadeIngresso: data.quantidade
+          });
+        });
+
+        listaUnificada.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        setHistorico(listaUnificada);
+      } catch (error) {
+        console.error("Erro:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         carregarTodoOHistorico(user.uid);
@@ -37,51 +83,6 @@ export function HistoricoCompras() {
     });
     return () => unsubscribe();
   }, []);
-
-  const carregarTodoOHistorico = async (userId: string) => {
-    try {
-      setLoading(true);
-      const listaUnificada: RegistroHistorico[] = [];
-
-      // 1. Busca Produtos
-      const pedidosSnapshot = await getDocs(query(collection(db, "orders"), where("userId", "==", userId)));
-      pedidosSnapshot.forEach((doc) => {
-        const data = doc.data();
-        listaUnificada.push({
-          id: doc.id,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          status: data.status,
-          total: data.total,
-          paymentMethod: data.paymentMethod,
-          tipo: 'produto',
-          items: data.items
-        });
-      });
-
-      // 2. Busca Ingressos
-      const ingressosSnapshot = await getDocs(query(collection(db, "ingressos_comprados"), where("userId", "==", userId)));
-      ingressosSnapshot.forEach((doc) => {
-        const data = doc.data();
-        listaUnificada.push({
-          id: doc.id,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          status: data.status || "DELIVERED",
-          total: data.total,
-          paymentMethod: data.paymentMethod,
-          tipo: 'ingresso',
-          ingressoTitle: data.title,
-          quantidadeIngresso: data.quantidade
-        });
-      });
-
-      listaUnificada.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-      setHistorico(listaUnificada);
-    } catch (error) {
-      console.error("Erro:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) return <div className="historico-page"><Sidebar /><div className="historico-container">Carregando...</div></div>;
 
@@ -107,7 +108,7 @@ export function HistoricoCompras() {
                     <p>Quantidade: {registro.quantidadeIngresso} | Clique para ver o QR Code</p>
                   </Link>
                 ) : (
-                  <ul>{registro.items?.map((item: any, i: number) => <li key={i}>{item.name}</li>)}</ul>
+                  <ul>{registro.items?.map((item, i) => <li key={i}>{item.name}</li>)}</ul>
                 )}
                 
                 <p className="historico-total">Total: R$ {registro.total.toFixed(2)}</p>

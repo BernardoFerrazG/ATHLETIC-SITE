@@ -1,18 +1,17 @@
 {
   "name": "athletic-site",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
-    "@fortawesome/fontawesome-free": "^7.2.0",
-    "axios": "^1.16.0",
     "firebase": "^12.12.1",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.5",
@@ -33,5 +32,9 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.2",
     "vite": "^8.0.10"
+  },
+  "description": "Plataforma web do Athletic Club: notícias, jogos, ingressos com QR Code e loja oficial com painel administrativo.",
+  "engines": {
+    "node": ">=20.19"
   }
 }

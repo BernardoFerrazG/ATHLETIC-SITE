@@ -31,6 +31,40 @@ export const AcompanharPedidos: React.FC = () => {
   const [erro, setErro] = useState<string>('');
 
   useEffect(() => {
+    const buscarPedidos = async (userId: string) => {
+      try {
+        const pedidosRef = collection(db, 'orders');
+        const q = query(
+          pedidosRef, 
+          where('userId', '==', userId),
+          orderBy('createdAt', 'desc') 
+        );
+
+        const querySnapshot = await getDocs(q);
+        const listaPedidos: Pedido[] = [];
+
+        querySnapshot.forEach((doc) => {
+          const dados = doc.data();
+          listaPedidos.push({
+            id: doc.id,
+            userId: dados.userId,
+            createdAt: dados.createdAt.toDate(), 
+            status: dados.status,
+            total: dados.total,
+            items: dados.items,
+            paymentMethod: dados.paymentMethod
+          });
+        });
+
+        setPedidos(listaPedidos);
+      } catch (error) {
+        console.error("Erro ao buscar pedidos:", error);
+        setErro('Não foi possível carregar os pedidos no momento.');
+      } finally {
+        setCarregando(false);
+      }
+    };
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         buscarPedidos(user.uid);
@@ -42,40 +76,6 @@ export const AcompanharPedidos: React.FC = () => {
 
     return () => unsubscribe();
   }, []);
-
-  const buscarPedidos = async (userId: string) => {
-    try {
-      const pedidosRef = collection(db, 'orders');
-      const q = query(
-        pedidosRef, 
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc') 
-      );
-
-      const querySnapshot = await getDocs(q);
-      const listaPedidos: Pedido[] = [];
-
-      querySnapshot.forEach((doc) => {
-        const dados = doc.data();
-        listaPedidos.push({
-          id: doc.id,
-          userId: dados.userId,
-          createdAt: dados.createdAt.toDate(), 
-          status: dados.status,
-          total: dados.total,
-          items: dados.items,
-          paymentMethod: dados.paymentMethod
-        });
-      });
-
-      setPedidos(listaPedidos);
-    } catch (error) {
-      console.error("Erro ao buscar pedidos:", error);
-      setErro('Não foi possível carregar os pedidos no momento.');
-    } finally {
-      setCarregando(false);
-    }
-  };
 
   const classeDoStatus = (status: string) => {
     switch (status) {

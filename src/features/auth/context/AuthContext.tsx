@@ -21,6 +21,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        // Mantém as rotas protegidas em espera até o perfil (e a role) carregar,
+        // evitando redirecionar o usuário recém-logado para /login ou /home.
+        setLoading(true);
         try {
           const userProfile = await getUserProfile(firebaseUser.uid);
           const authUser = {
