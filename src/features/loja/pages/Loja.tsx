@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../components/Sidebar";
-import { useCart } from "../../../contexts/CartContext";
+import { useCart } from "../../../contexts/useCart";
 import { getProducts } from "../services/products";
 import type { Product } from "../types/products";
 import "../styles/Loja.css";

@@ -28,25 +28,25 @@ export default function NewsDetail() {
   useEffect(() => {
     if (!id) return;
 
-    loadNews();
-  }, [id]);
+    async function loadNews() {
+      try {
+        const data = await getNewsById(id!);
 
-  async function loadNews() {
-    try {
-      const data = await getNewsById(id!);
+        if (!data) {
+          navigate("/noticias");
+          return;
+        }
 
-      if (!data) {
-        navigate("/noticias");
-        return;
+        setNews(data as News);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
-
-      setNews(data as News);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
     }
-  }
+
+    loadNews();
+  }, [id, navigate]);
 
   if (loading) {
     return (

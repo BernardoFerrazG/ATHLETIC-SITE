@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import Sidebar from "../../../components/Sidebar";
-import { useCart } from "../../../contexts/CartContext";
+import { useCart } from "../../../contexts/useCart";
 import { auth } from "../../../lib/firebase";
 
 import { createOrder } from "../services/orderService";

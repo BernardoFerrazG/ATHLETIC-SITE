@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 
 import type { Product } from "../features/loja/types/products"; 
@@ -7,7 +7,7 @@ export interface CartItem extends Product {
   quantity: number;
 }
 
-interface CartContextData {
+export interface CartContextData {
   cart: CartItem[];
   addToCart: (product: Product, quantity?: number) => void;
   removeFromCart: (productId: string) => void;
@@ -57,6 +57,4 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useCart() {
-  return useContext(CartContext);
-}
+export { CartContext };

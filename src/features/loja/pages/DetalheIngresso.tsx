@@ -4,11 +4,12 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase"; 
 import { QRCodeSVG } from "qrcode.react";
 import Sidebar from "../../../components/Sidebar";
+import type { IngressoCompra } from "../../ingressos/types/ingressos";
 import "../styles/DetalheIngresso.css";
 
 export function DetalheIngresso() {
   const { id } = useParams();
-  const [ingresso, setIngresso] = useState<any>(null);
+  const [ingresso, setIngresso] = useState<IngressoCompra | null>(null);
 
   useEffect(() => {
     async function carregar() {
@@ -16,7 +17,7 @@ export function DetalheIngresso() {
         const docRef = doc(db, "ingressos_comprados", id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setIngresso({ id: docSnap.id, ...docSnap.data() });
+          setIngresso({ ...docSnap.data(), id: docSnap.id } as IngressoCompra);
         }
       }
     }
